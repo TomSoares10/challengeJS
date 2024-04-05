@@ -3,6 +3,8 @@ let enemies = [];
 let playerWeapons = [];
 let gameOverFrames = 0; // Compteur pour l'animation de Game Over
 let canvas; // Variable globale pour référencer le canvas
+let score = 0; // Variable pour stocker le score du joueur
+
 
 function setup() {
     if (canvas) { // Vérifie si un canvas existe déjà
@@ -11,6 +13,9 @@ function setup() {
     canvas = createCanvas(800, 600); // Crée un nouveau canvas et le stocke dans la variable globale
     initializeGame(); // Fonction pour initialiser ou réinitialiser le jeu
 }
+
+
+
 
 function initializeGame() {
     player = new Player();
@@ -27,6 +32,12 @@ function draw() {
 
     handleEnemies();
     handleWeapons();
+
+    // Affichage du score
+    fill(0); // Couleur du texte
+    textSize(24); // Taille du texte
+    textAlign(LEFT,TOP); // Alignement du texte
+    text(`Score: ${score}`, 10, 10); // Positionnez le score dans le coin supérieur gauche
 
     // Vérifie si le jeu est perdu
     checkGameOver();
@@ -153,7 +164,6 @@ class Enemy {
 }
 
 
-// Les classes Player et Enemy restent inchangées
 
 class Weapon {
     constructor(x, y) {
@@ -181,15 +191,18 @@ class Weapon {
         for (let i = enemies.length - 1; i >= 0; i--) {
             if (dist(this.x, this.y, enemies[i].x, enemies[i].y) < this.size / 2 + enemies[i].size / 2) {
                 enemies.splice(i, 1); // Élimine l'ennemi touché
+                score += 100; // Augmente le score du joueur
+
                 let index = playerWeapons.indexOf(this);
                 if (index > -1) {
                     playerWeapons.splice(index, 1); // Supprime l'arme après avoir touché l'ennemi
                 }
-                break;
+                break; // Sort de la boucle après avoir traité la collision pour éviter des erreurs
             }
         }
     }
 }
+
 
 // Fonction mouseClicked pour lancer une arme
 function mouseClicked() {
