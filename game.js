@@ -7,20 +7,20 @@ let score = 0; // Variable pour stocker le score du joueur
 
 
 function setup() {
-    if (canvas) { // Vérifie si un canvas existe déjà
-        canvas.remove(); // Supprime le canvas existant
+    // Vérifie si un canvas existe déjà et le supprime le cas échéant
+    if (canvas) {
+        canvas.remove();
     }
     canvas = createCanvas(800, 600); // Crée un nouveau canvas et le stocke dans la variable globale
     initializeGame(); // Fonction pour initialiser ou réinitialiser le jeu
+    showLeaderboard(); // Affiche le classement des scores dès le chargement
 }
-
-
-
 
 function initializeGame() {
     player = new Player();
     enemies = []; // Réinitialise les ennemis pour une nouvelle partie
     playerWeapons = []; // Réinitialise les armes du joueur
+    score = 0; // Réinitialise le score du joueur
     loop(); // S'assure que la boucle de dessin est en cours d'exécution
 }
 
@@ -43,10 +43,35 @@ function draw() {
     checkGameOver();
 }
 
+function saveScore(score, pseudo) {
+    // Récupère les scores existants depuis localStorage, ou initialise un tableau vide si aucun score n'existe
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    scores.push({ score, pseudo }); // Ajoute le nouveau score au tableau
+    scores.sort((a, b) => b.score - a.score); // Trie les scores du meilleur au moins bon
+    localStorage.setItem('scores', JSON.stringify(scores));
+    // Enregistre le tableau mis à jour dans localStorage
+}
+
+function showLeaderboard() {
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    let leaderboard = document.getElementById('leaderboard'); // Assurez-vous d'avoir un élément avec cet ID dans votre HTML
+    leaderboard.innerHTML = '<h2>Classement</h2>'; // Titre du classement
+    scores.forEach((score, index) => {
+        leaderboard.innerHTML += `<p><font color="#ffd700">${index + 1}.</font> ${score.pseudo} - ${score.score}</p>`; // Affiche chaque score
+    });
+}
+
+
 function gameOver() {
     noLoop(); // Arrête la boucle draw
+    let pseudo = prompt("Game Over. Entrez votre pseudo pour enregistrer votre score:", "");
+    if (pseudo) {
+        saveScore(score, pseudo); // Enregistre le score avec le pseudo
+        showLeaderboard(); // Affiche le classement mis à jour
+    }
     gameOverAnimation(); // Commence l'animation de Game Over
 }
+
 function gameOverAnimation() {
     let alpha = map(sin(gameOverFrames), -1, 1, 100, 255); // Animation clignotante
     background(0, alpha); // Fond semi-transparent noir
