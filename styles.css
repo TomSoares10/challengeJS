@@ -267,3 +267,40 @@ button:active, button:focus {
     50% { transform: translateY(-10px); } /* Mouvement plus subtil */
 }
 
+#leaderboard {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff; /* Couleur de texte par défaut pour tout le classement */
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+    font-family: 'Arial', sans-serif;
+    z-index: 1000;
+}
+
+#leaderboard h2 {
+    color: #ffd700; /* Or pour le titre */
+    font-size: 24px;
+    text-align: center;
+    margin: 0 0 20px 0;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #555;
+}
+
+#leaderboard p {
+    margin: 5px 0;
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+#leaderboard p:nth-child(odd) {
+    background-color: rgba(255, 255, 255, 0.1); /* Pour un contraste léger sur chaque deuxième ligne */
+}
+
+.placement {
+    color: #ffd700; /* Couleur dorée appliquée uniquement au numéro de placement */
+}
+
