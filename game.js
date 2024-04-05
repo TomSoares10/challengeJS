@@ -2,12 +2,21 @@ let player;
 let enemies = [];
 let playerWeapons = [];
 let gameOverFrames = 0; // Compteur pour l'animation de Game Over
+let canvas; // Variable globale pour référencer le canvas
 
 function setup() {
-    createCanvas(800, 600);
+    if (canvas) { // Vérifie si un canvas existe déjà
+        canvas.remove(); // Supprime le canvas existant
+    }
+    canvas = createCanvas(800, 600); // Crée un nouveau canvas et le stocke dans la variable globale
+    initializeGame(); // Fonction pour initialiser ou réinitialiser le jeu
+}
+
+function initializeGame() {
     player = new Player();
     enemies = []; // Réinitialise les ennemis pour une nouvelle partie
     playerWeapons = []; // Réinitialise les armes du joueur
+    loop(); // S'assure que la boucle de dessin est en cours d'exécution
 }
 
 function draw() {
@@ -52,11 +61,14 @@ function showRestartButton() {
 }
 
 function restartGame() {
-    // Réinitialise le jeu
-    gameOverFrames = 0;
-    enemies = [];
-    playerWeapons = [];
-    loop(); // Redémarre la boucle draw
+    gameOverFrames = 0; // Réinitialise le compteur pour l'animation de Game Over
+    enemies = []; // Réinitialise la liste des ennemis
+    playerWeapons = []; // Réinitialise la liste des armes du joueur
+    player = new Player(); // Réinitialise le joueur
+
+    removeElements(); // Supprime tous les éléments p5.js créés dans le DOM, y compris le bouton Rejouer
+
+    loop(); // Redémarre la boucle draw pour le jeu
 }
 
 function checkGameOver() {
