@@ -183,3 +183,87 @@ h1 {
 .container, button, h1 {
     animation: fadeIn 1s ease-out;
 }
+
+/* Nouvelle palette de couleurs et typographie */
+:root {
+    --color-primary: #5e72e4; /* Bleu primaire plus doux */
+    --color-secondary: #f4f5f7; /* Gris clair pour le fond */
+    --color-accent: #11cdef; /* Turquoise pour les accents */
+    --color-text: #32325d; /* Gris foncé pour le texte, plus lisible */
+    --font-primary: 'Nunito', sans-serif; /* Police principale */
+    --font-secondary: 'Roboto Slab', serif; /* Police secondaire pour les titres */
+}
+
+body, html {
+    font-family: var(--font-primary);
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    color: var(--color-text);
+}
+
+/* Amélioration du container principal */
+.container {
+    background: var(--color-secondary);
+    border: 2px solid rgba(255, 255, 255, 0.6); /* Bordure plus visible */
+    /* Ajout d'un léger gradient sur la bordure pour un effet plus dynamique */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+}
+
+/* Titre amélioré */
+h1 {
+    font-family: var(--font-secondary);
+    color: var(--color-primary);
+    margin-bottom: 1rem;
+    text-align: center; /* Centrage du titre */
+}
+
+/* Boutons revisités */
+button {
+    background-color: var(--color-primary);
+    border-radius: 8px; /* Bordures plus arrondies */
+    transition: all 0.2s ease-in-out; /* Transition plus rapide */
+}
+
+button:hover {
+    background-color: var(--color-accent);
+    transform: translateY(-2px); /* Effet de soulèvement moins prononcé */
+}
+
+button:active, button:focus {
+    outline: none; /* Suppression de l'outline par défaut */
+    box-shadow: 0 0 0 3px rgba(17, 205, 239, 0.5); /* Glow effect */
+}
+
+/* Ajustements responsive pour une meilleure ergonomie sur petits écrans */
+@media only screen and (max-width: 768px) {
+    .container {
+        padding: 20px;
+        border-radius: 15px; /* Bordures moins arrondies pour économiser l'espace */
+    }
+
+    h1 {
+        font-size: 1.8rem; /* Taille de police réduite pour le titre */
+    }
+
+    button {
+        padding: 12px 24px; /* Boutons légèrement plus petits */
+        font-size: 0.85rem;
+    }
+}
+
+/* Effets visuels supplémentaires pour dynamiser l'interface */
+.container:hover::before {
+    animation-direction: reverse; /* Inversion de l'animation pour un effet interactif */
+}
+
+/* Transition douce pour le fond sur hover */
+.container:hover {
+    background: var(--color-secondary) linear-gradient(135deg, var(--color-primary) 0%, var(--color-accent) 100%);
+    transition: background-color 0.3s ease-in-out;
+}
+
+/* Utilisation de `var` pour les animations pour une cohérence thématique */
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); } /* Mouvement plus subtil */
+}
+
