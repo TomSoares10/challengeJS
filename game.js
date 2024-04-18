@@ -22,6 +22,7 @@ function initializeGame() {
 }
 
 function draw() {
+    console.log("Drawing frame");
     background(220);
     player.display();
     player.move();
@@ -43,7 +44,7 @@ function displayHUD() {
 function mouseClicked() {
     if (playerWeapons.length < 5) {
         playerWeapons.push(new Weapon(player.x, player.y - player.size / 2));
-        enemySpeedMultiplier += 0.05; // Augmente la vitesse des ennemis à chaque tir
+        enemySpeedMultiplier += 0.05 // Augmente la vitesse des ennemis à chaque tir
     }
 }
 
@@ -55,19 +56,48 @@ function handleEnemies() {
     for (let i = enemies.length - 1; i >= 0; i--) {
         enemies[i].move();
         enemies[i].display();
-        if (enemies[i].hits(player)) {
-            gameOver();
-            break;
+        if (enemies[i].y > height) {
+            player.loseHealth(10); // L'ennemi a dépassé le bas de l'écran
+            enemies.splice(i, 1); // Supprimer l'ennemi
+        }
+        else if (enemies[i].hits(player)) {
+            player.loseHealth(10);
+            enemies.splice(i, 1); // Supprimer l'ennemi immédiatement
         }
     }
 }
 
+
+
+
 function handleWeapons() {
-    for (let weapon of playerWeapons) {
+    for (let i = playerWeapons.length - 1; i >= 0; i--) {
+        let weapon = playerWeapons[i];
         weapon.display();
         weapon.move();
+
+        let hitSomething = false; // Pour vérifier si une arme touche un ennemi
+
+        for (let j = enemies.length - 1; j >= 0; j--) {
+            if (weapon.hits(enemies[j])) {
+                playerWeapons.splice(i, 1); // Supprimer la balle
+                enemies.splice(j, 1); // Supprimer l'ennemi
+                score += 100; // Augmenter le score, par exemple
+                hitSomething = true;
+                break; // Sortir de la boucle après une collision pour éviter des erreurs d'indice
+            }
+        }
+
+        // Si la balle n'a rien touché et sort du canvas
+        if (!hitSomething && weapon.y < 0) {
+            player.loseHealth(10);
+            playerWeapons.splice(i, 1); // Supprimer la balle
+        }
     }
 }
+
+
+
 
 function gameOver() {
     noLoop();
@@ -112,7 +142,7 @@ class Enemy {
         this.x = x;
         this.y = y;
         this.size = 30;
-        this.speed = 2 * enemySpeedMultiplier;
+        this.speed = 2;  // Vitesse initiale
     }
 
     display() {
@@ -121,14 +151,17 @@ class Enemy {
     }
 
     move() {
-        this.y += this.speed;
+        this.y += this.speed * enemySpeedMultiplier;
     }
 
     hits(player) {
         let d = dist(this.x, this.y, player.x, player.y);
-        return d < this.size / 2 + player.size / 2;
+        return d < (this.size / 2 + player.size / 2);
     }
 }
+
+
+
 
 class Weapon {
     constructor(x, y) {
@@ -145,15 +178,14 @@ class Weapon {
 
     move() {
         this.y -= this.speed;
-        if (this.y < 0) {
-            player.loseHealth(10);
-            let index = playerWeapons.indexOf(this);
-            if (index > -1) {
-                playerWeapons.splice(index, 1);
-            }
-        }
+    }
+
+    hits(enemy) {
+        let d = dist(this.x, this.y, enemy.x, enemy.y);
+        return d < (this.size / 2 + enemy.size / 2);
     }
 }
+
 
 function checkGameOver() {
     for (let i = enemies.length - 1; i >= 0; i--) {
