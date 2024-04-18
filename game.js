@@ -13,6 +13,7 @@ function setup() {
 
 
 function initializeGame() {
+    localStorage.clear()
     player = new Player();
     enemies = [];
     playerWeapons = [];
@@ -102,10 +103,11 @@ function gameOver() {
     let pseudo = prompt("Game Over. Entrez votre pseudo pour enregistrer votre score:", "");
     if (pseudo) {
         saveScore(score, pseudo);
-        showLeaderboard();
+        showLeaderboard();  // Mise à jour immédiate du classement
     }
-    gameOverAnimation(); // Assurez-vous que cette fonction n'interfère pas avec l'affichage des scores.
+    gameOverAnimation();
 }
+
 
 // Méthodes supplémentaires comme saveScore(), showLeaderboard(), gameOverAnimation() restent inchangées
 
@@ -201,10 +203,16 @@ function saveScore(score, pseudo) {
 
 function showLeaderboard() {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
-    let leaderboard = 'Leaderboard:\n';
-    scores.forEach((entry, index) => {
-        leaderboard += `${index + 1}. ${entry.pseudo} - ${entry.score}\n`;
+    let scoreList = document.getElementById('scoreList');
+    scoreList.innerHTML = ''; // Nettoyer la liste existante
+
+    scores.sort((a, b) => b.score - a.score); // Trier par score décroissant
+
+    scores.forEach(score => {
+        let li = document.createElement('li');
+        li.textContent = `${score.pseudo} - ${score.score}`;
+        scoreList.appendChild(li);
     });
-    alert(leaderboard);
 }
+
 
