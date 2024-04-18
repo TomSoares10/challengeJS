@@ -68,8 +68,6 @@ function handleEnemies() {
 }
 
 
-
-
 function handleWeapons() {
     for (let i = playerWeapons.length - 1; i >= 0; i--) {
         let weapon = playerWeapons[i];
@@ -106,7 +104,7 @@ function gameOver() {
         saveScore(score, pseudo);
         showLeaderboard();
     }
-    gameOverAnimation();
+    gameOverAnimation(); // Assurez-vous que cette fonction n'interfère pas avec l'affichage des scores.
 }
 
 // Méthodes supplémentaires comme saveScore(), showLeaderboard(), gameOverAnimation() restent inchangées
@@ -160,9 +158,6 @@ class Enemy {
     }
 }
 
-
-
-
 class Weapon {
     constructor(x, y) {
         this.x = x;
@@ -196,3 +191,20 @@ function checkGameOver() {
         }
     }
 }
+
+function saveScore(score, pseudo) {
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    scores.push({ pseudo: pseudo, score: score });
+    scores.sort((a, b) => b.score - a.score); // Tri des scores en ordre décroissant
+    localStorage.setItem('scores', JSON.stringify(scores));
+}
+
+function showLeaderboard() {
+    let scores = JSON.parse(localStorage.getItem('scores')) || [];
+    let leaderboard = 'Leaderboard:\n';
+    scores.forEach((entry, index) => {
+        leaderboard += `${index + 1}. ${entry.pseudo} - ${entry.score}\n`;
+    });
+    alert(leaderboard);
+}
+
