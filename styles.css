@@ -20,7 +20,7 @@ body, html {
 }
 
 /* Container principal */
-.container {
+.container
     margin-left: 20px;
     padding: 40px 60px;
     margin-right:20px;
