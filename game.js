@@ -8,6 +8,15 @@ let enemySpeedMultiplier = 1; // Multiplieur de vitesse pour les ennemis
 let tripleShotActive = false;
 let tripleShotDuration = 300; // Durée du bonus en nombre de frames
 let powerUps = []; // Liste pour stocker les power-ups
+let playerImg;
+let enemyImg;
+
+function preload() {
+    playerImg = loadImage('image/vaiseau.png');  // Assurez-vous que le chemin est correct
+    enemyImg = loadImage('image/ennemi.png');    // Assurez-vous que le chemin est correct
+}
+
+
 
 function setup() {
     window.canvas = createCanvas(800, 600);
@@ -44,9 +53,12 @@ function displayHUD() {
     fill(0);
     textSize(24);
     textAlign(LEFT, TOP);
+    // Vérifiez si la santé est définie avant de l'afficher
+    let healthDisplay = (player.health !== undefined && !isNaN(player.health)) ? player.health : 0;
     text(`Score: ${score}`, 10, 10);
-    text(`Health: ${player.health}`, 10, 40); // Affiche la santé du joueur
+    text(`Health: ${healthDisplay}`, 10, 40); // Affichage de la santé avec vérification
 }
+
 
 function mouseClicked() {
     if (playerWeapons.length < 5) {
@@ -71,25 +83,25 @@ function adjustDifficulty() {
 }
 
 function handleEnemies() {
-    // La condition suivante vérifie si le nombre de frames écoulées depuis le dernier ennemi généré
-    // est suffisant pour générer un nouvel ennemi.
-    // '120 - score / 100' peut devenir très petit ou négatif si le score est élevé, ce qui n'est pas géré.
-    if (frameCount % Math.max(30, 120 - score / 100) === 0) {
-        enemies.push(new Enemy(random(width), -10));
+    if (frameCount % 120 === 0) {  // Génère un ennemi toutes les 2 secondes
+        let enemy = new Enemy(random(width), -30);  // Commence hors du canvas en haut
+        enemies.push(enemy);
+        console.log("Enemy spawned at x:", enemy.x, "y:", enemy.y); // Pour déboguer
     }
 
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].move();
-        enemies[i].display();
-        if (enemies[i].y > height) {
+    enemies.forEach((enemy, index) => {
+        enemy.move();
+        enemy.display();
+        if (enemy.y > height + enemy.size) {  // Vérifie si l'ennemi a quitté le canvas par le bas
+            enemies.splice(index, 1);
+        } else if (enemy.hits(player)) {
             player.loseHealth(10);
-            enemies.splice(i, 1);
-        } else if (enemies[i].hits(player)) {
-            player.loseHealth(10);
-            enemies.splice(i, 1);
+            enemies.splice(index, 1);
         }
-    }
+    });
 }
+
+
 
 function handleWeapons() {
     for (let i = playerWeapons.length - 1; i >= 0; i--) {
@@ -130,20 +142,17 @@ function gameOver() {
     gameOverAnimation();
 }
 
-
-// Méthodes supplémentaires comme saveScore(), showLeaderboard(), gameOverAnimation() restent inchangées
-
 class Player {
     constructor() {
         this.x = width / 2;
         this.y = height - 60;
-        this.size = 50;
-        this.health = 100;
+        this.size = 50; // Taille pour l'affichage du joueur
+        this.health = 100; // Initialisation correcte de la santé
     }
 
     display() {
-        fill(0, 0, 255);
-        ellipse(this.x, this.y, this.size, this.size);
+        imageMode(CENTER);
+        image(playerImg, this.x, this.y, this.size, this.size);
     }
 
     move() {
@@ -159,17 +168,19 @@ class Player {
     }
 }
 
+
+
 class Enemy {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = 30;
+        this.size = 30;  // Assurez-vous que cette taille correspond à la taille que vous voulez pour l'image
         this.speed = 2;  // Vitesse initiale
     }
 
     display() {
-        fill(255, 0, 0);
-        ellipse(this.x, this.y, this.size, this.size);
+        imageMode(CENTER);
+        image(enemyImg, this.x, this.y, this.size, this.size); // S'assure que l'image de l'ennemi est affichée
     }
 
     move() {
@@ -181,6 +192,9 @@ class Enemy {
         return d < (this.size / 2 + player.size / 2);
     }
 }
+
+
+
 
 class Weapon {
     constructor(x, y, angle) {
