@@ -12,27 +12,24 @@ let playerImg;
 let enemyImg;
 
 function preload() {
-    playerImg = loadImage('image/vaiseau.png');  // Assurez-vous que le chemin est correct
-    enemyImg = loadImage('image/ennemi.png');    // Assurez-vous que le chemin est correct
+    playerImg = loadImage('image/vaiseau.png');
+    enemyImg = loadImage('image/ennemi.png');
 }
-
-
 
 function setup() {
-    window.canvas = createCanvas(800, 600);
+    canvas = createCanvas(800, 600);
     initializeGame();
 }
-
 
 function initializeGame() {
     localStorage.clear();
     player = new Player();
     enemies = [];
     playerWeapons = [];
-    powerUps = []; // Réinitialiser la liste des power-ups
+    powerUps = [];
     score = 0;
     enemySpeedMultiplier = 1;
-    tripleShotActive = false; // S'assurer que le bonus triple tir est désactivé au début
+    tripleShotActive = false;
     loop();
 }
 
@@ -42,107 +39,102 @@ function draw() {
     player.move();
     handleEnemies();
     handleWeapons();
-    handlePowerUps(); // Gérer les power-ups
+    handlePowerUps();
     displayHUD();
     checkGameOver();
 }
-
-
 
 function displayHUD() {
     fill(0);
     textSize(24);
     textAlign(LEFT, TOP);
-    // Vérifiez si la santé est définie avant de l'afficher
-    let healthDisplay = (player.health !== undefined && !isNaN(player.health)) ? player.health : 0;
     text(`Score: ${score}`, 10, 10);
-    text(`Health: ${healthDisplay}`, 10, 40); // Affichage de la santé avec vérification
+    text(`Health: ${player.health}`, 10, 40);
 }
-
 
 function mouseClicked() {
     if (playerWeapons.length < 5) {
         if (tripleShotActive) {
-            // Tirer en trois directions
-            playerWeapons.push(new Weapon(player.x, player.y - player.size / 2, 0)); // Directement en avant
-            playerWeapons.push(new Weapon(player.x, player.y - player.size / 2, 5)); // Angle à droite
-            playerWeapons.push(new Weapon(player.x, player.y - player.size / 2, -5)); // Angle à gauche
+            playerWeapons.push(new Weapon(player.x, player.y, 0));
+            playerWeapons.push(new Weapon(player.x, player.y, radians(5)));
+            playerWeapons.push(new Weapon(player.x, player.y, radians(-5)));
         } else {
-            // Tir normal
-            playerWeapons.push(new Weapon(player.x, player.y - player.size / 2, 0));
+            playerWeapons.push(new Weapon(player.x, player.y, 0));
         }
-    }
-}
-
-
-function adjustDifficulty() {
-    if (score % 1000 === 0 && score > 0) {  // Chaque 1000 points, sauf à 0
-        enemySpeedMultiplier += 0.1;  // Augmente la vitesse des ennemis
-        console.log("Difficulty increased: Speed Multiplier = " + enemySpeedMultiplier);
     }
 }
 
 function handleEnemies() {
-    let spawnRate = Math.max(30, 120 - Math.floor(score / 1000) * 10);  // Diminue l'intervalle de spawn avec le score
-    if (frameCount % spawnRate === 0) {
-        enemies.push(new Enemy(random(width), -10));
+    if (frameCount % 120 === 0) {
+        enemies.push(new Enemy(random(width), -30));
     }
 
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        enemies[i].move();
-        enemies[i].display();
-        if (enemies[i].y > height) {
-            enemies.splice(i, 1);
-        } else if (enemies[i].hits(player)) {
+    enemies.forEach((enemy, index) => {
+        enemy.move();
+        enemy.display();
+        if (enemy.y > height + enemy.size) {
+            enemies.splice(index, 1);
+        } else if (enemy.hits(player)) {
             player.loseHealth(10);
-            enemies.splice(i, 1);
+            enemies.splice(index, 1);
         }
-    }
+    });
 }
-
-
 
 function handleWeapons() {
     for (let i = playerWeapons.length - 1; i >= 0; i--) {
         let weapon = playerWeapons[i];
         weapon.display();
         weapon.move();
-
-        let hitSomething = false; // Pour vérifier si une arme touche un ennemi
-
         for (let j = enemies.length - 1; j >= 0; j--) {
             if (weapon.hits(enemies[j])) {
-                playerWeapons.splice(i, 1); // Supprimer la balle
-                enemies.splice(j, 1); // Supprimer l'ennemi
-                score += 100; // Augmenter le score
-                hitSomething = true;
-                break; // Sortir de la boucle après une collision
+                score += 100;
+                enemies.splice(j, 1);
+                playerWeapons.splice(i, 1);
+                break;
             }
         }
+    }
+}
 
-        // Supprimer simplement la balle si elle sort du canvas sans toucher un ennemi
-        if (!hitSomething && weapon.y < 0) {
-            playerWeapons.splice(i, 1); // Supprimer la balle
+function handlePowerUps() {
+    if (frameCount % 600 === 0) {  // Génère un bonus toutes les 10 secondes (à 60 FPS, cela équivaut à 600 frames)
+        let powerUp = new PowerUp(random(width), 10);  // Assurez-vous que les bonus ne commencent pas hors du canvas
+        powerUps.push(powerUp);
+        console.log("Power-up spawned at x:", powerUp.x, "y:", powerUp.y); // Pour déboguer et confirmer la création
+    }
+
+    for (let i = powerUps.length - 1; i >= 0; i--) {
+        let powerUp = powerUps[i];
+        powerUp.display();
+        powerUp.move();
+
+        // Vérifie si le joueur collecte le power-up
+        if (dist(player.x, player.y, powerUp.x, powerUp.y) < (player.size / 2 + powerUp.size / 2)) {
+            applyPowerUp();
+            powerUps.splice(i, 1);  // Supprimer le bonus après la collecte
+            console.log("Power-up collected"); // Confirmation de la collecte
         }
     }
 }
 
-function gameOver() {
-    noLoop();
-    let pseudo = prompt("Game Over. Entrez votre pseudo pour enregistrer votre score:", "");
-    if (pseudo) {
-        saveScore(score, pseudo);
-        showLeaderboard();  // Mise à jour immédiate du classement
-    }
-    gameOverAnimation();
+
+function applyPowerUp() {
+    tripleShotActive = true;
+    console.log("Triple Shot Activated!");
+    setTimeout(() => {
+        tripleShotActive = false;
+        console.log("Triple Shot Deactivated!");
+    }, tripleShotDuration * 1000);  // Dure 300 secondes
 }
+
 
 class Player {
     constructor() {
         this.x = width / 2;
         this.y = height - 60;
-        this.size = 50; // Taille pour l'affichage du joueur
-        this.health = 100; // Initialisation correcte de la santé
+        this.size = 50;
+        this.health = 100;
     }
 
     display() {
@@ -157,29 +149,24 @@ class Player {
 
     loseHealth(amount) {
         this.health -= amount;
-        if (this.health <= 0) {
-            gameOver();
-        }
     }
 }
-
-
 
 class Enemy {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = 30;  // Assurez-vous que cette taille correspond à la taille que vous voulez pour l'image
-        this.speed = 2;  // Vitesse initiale
+        this.size = 100;
+        this.speed = 2;
     }
 
     display() {
         imageMode(CENTER);
-        image(enemyImg, this.x, this.y, this.size, this.size); // S'assure que l'image de l'ennemi est affichée
+        image(enemyImg, this.x, this.y, this.size, this.size);
     }
 
     move() {
-        this.y += this.speed * enemySpeedMultiplier;
+        this.y += this.speed;
     }
 
     hits(player) {
@@ -188,16 +175,13 @@ class Enemy {
     }
 }
 
-
-
-
 class Weapon {
     constructor(x, y, angle) {
         this.x = x;
         this.y = y;
         this.size = 20;
         this.speed = 5;
-        this.angle = angle; // Angle pour la direction de tir
+        this.angle = angle;
     }
 
     display() {
@@ -206,94 +190,63 @@ class Weapon {
     }
 
     move() {
-        this.x += this.speed * sin(this.angle * (PI / 180)); // Conversion de degrés en radians
-        this.y -= this.speed * cos(this.angle * (PI / 180));
+        this.x += this.speed * sin(this.angle);
+        this.y -= this.speed * cos(this.angle);
     }
 
-    // Méthode pour vérifier si cette arme touche un ennemi
     hits(enemy) {
         let distance = dist(this.x, this.y, enemy.x, enemy.y);
         return distance < (this.size / 2 + enemy.size / 2);
     }
 }
 
+class PowerUp {
+    constructor(x, y) {
+        this.x = x;
+        this.y = y;
+        this.size = 20;  // Taille visible pour le bonus
+    }
 
+    display() {
+        fill(255, 204, 0); // Utiliser une couleur distincte pour les bonus, comme le jaune
+        ellipse(this.x, this.y, this.size, this.size);
+    }
+
+    move() {
+        this.y += 1; // Vitesse modérée pour que le bonus descende vers le joueur
+    }
+}
 
 
 function checkGameOver() {
-    for (let i = enemies.length - 1; i >= 0; i--) {
-        // Si un ennemi touche le joueur ou atteint le bas de l'écran
-        if (enemies[i].hits(player) || enemies[i].y > height) {
-            gameOver(); // Appelle la fonction gameOver
-            break; // Sort de la boucle pour éviter des vérifications inutiles
-        }
+    if (player.health <= 0) {
+        gameOver();
+    }
+}
+
+function gameOver() {
+    noLoop();
+    let pseudo = prompt("Game Over. Entrez votre pseudo pour enregistrer votre score:", "");
+    if (pseudo) {
+        saveScore(score, pseudo);
+        showLeaderboard();
     }
 }
 
 function saveScore(score, pseudo) {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
     scores.push({ pseudo: pseudo, score: score });
-    scores.sort((a, b) => b.score - a.score); // Tri des scores en ordre décroissant
+    scores.sort((a, b) => b.score - a.score);
     localStorage.setItem('scores', JSON.stringify(scores));
 }
 
 function showLeaderboard() {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
     let scoreList = document.getElementById('scoreList');
-    scoreList.innerHTML = ''; // Nettoyer la liste existante
-
-    scores.sort((a, b) => b.score - a.score); // Trier par score décroissant
-
+    scoreList.innerHTML = '';
     scores.forEach(score => {
         let li = document.createElement('li');
         li.textContent = `${score.pseudo} - ${score.score}`;
         scoreList.appendChild(li);
     });
 }
-
-class PowerUp {
-    constructor() {
-        this.x = random(width);
-        this.y = -10; // Assurez-vous qu'ils apparaissent dans la zone visible
-        this.size = 20;
-    }
-
-    display() {
-        fill(0, 255, 0); // Utilisez une couleur distincte pour les identifier facilement
-        ellipse(this.x, this.y, this.size, this.size);
-    }
-
-    move() {
-        this.y += 2; // Vitesse appropriée pour que le joueur puisse les collecter
-    }
-}
-
-
-function handlePowerUps() {
-    if (frameCount % 600 === 0) {  // Apparaît toutes les 10 secondes
-        powerUps.push(new PowerUp());
-    }
-
-    for (let i = powerUps.length - 1; i >= 0; i--) {
-        let powerUp = powerUps[i];
-        powerUp.display();
-        powerUp.move();
-
-        // Vérifie si le joueur collecte le power-up
-        if (dist(player.x, player.y, powerUp.x, powerUp.y) < (player.size / 2 + powerUp.size / 2)) {
-            applyPowerUp();
-            powerUps.splice(i, 1);  // Supprimer le bonus après la collecte
-        }
-    }
-}
-
-
-function applyPowerUp() {
-    console.log("Triple Shot Activated!");
-    tripleShotActive = true;
-    setTimeout(() => {
-        tripleShotActive = false;
-        console.log("Triple Shot Deactivated!");
-    }, tripleShotDuration * 16.67); // Multiplié par 16.67 pour convertir les millisecondes (approximativement 60 fps)
-}
-
