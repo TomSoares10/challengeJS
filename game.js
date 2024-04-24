@@ -1,23 +1,23 @@
 let player;
 let enemies = [];
 let playerWeapons = [];
-let gameOverFrames = 0; // Compteur pour l'animation de Game Over
-let canvas; // Variable globale pour référencer le canvas
-let score = 0; // Variable pour stocker le score du joueur
-let enemySpeedMultiplier = 1; // Multiplieur de vitesse pour les ennemis
+let gameOverFrames = 0;
+let canvas;
+let score = 0;
+let enemySpeedMultiplier = 1;
 let tripleShotActive = false;
-let tripleShotDuration = 300; // Durée du bonus en nombre de frames
-let powerUps = []; // Liste pour stocker les power-ups
-let playerImg;
-let enemyImg;
-let tripleShotImg; // Variable pour stocker l'image du bonus de tir triple
+let tripleShotDuration = 300;
+let powerUps = [];
+let playerImg, enemyImg, tripleShotImg, lifePlusImg, ammoBonusImg;
+let initialAmmo = 30; // Munitions initiales
 
 function preload() {
     playerImg = loadImage('image/vaiseau.png');
     enemyImg = loadImage('image/ennemi.png');
     tripleShotImg = loadImage('image/bonustripletir.png');
+    lifePlusImg = loadImage('image/coeur.png');
+    ammoBonusImg = loadImage('image/balleenplus.png');
 }
-
 
 function setup() {
     canvas = createCanvas(800, 600);
@@ -33,6 +33,7 @@ function initializeGame() {
     score = 0;
     enemySpeedMultiplier = 1;
     tripleShotActive = false;
+    player.ammo = initialAmmo;
     loop();
 }
 
@@ -45,6 +46,7 @@ function draw() {
     handlePowerUps();
     displayHUD();
     checkGameOver();
+    checkAmmo();
 }
 
 function displayHUD() {
@@ -53,23 +55,27 @@ function displayHUD() {
     textAlign(LEFT, TOP);
     text(`Score: ${score}`, 10, 10);
     text(`Health: ${player.health}`, 10, 40);
+    text(`Ammo: ${player.ammo}`, 10, 70);
 }
 
 function mouseClicked() {
-    // Vérifie si moins de 5 armes sont actives avant de permettre de tirer
-    if (playerWeapons.length < 5) {
-        if (tripleShotActive) {
-            // Tirer en trois directions si le bonus est actif
-            playerWeapons.push(new Weapon(player.x, player.y, 0)); // Tir direct
-            playerWeapons.push(new Weapon(player.x, player.y, radians(5))); // Légèrement à droite
-            playerWeapons.push(new Weapon(player.x, player.y, radians(-5))); // Légèrement à gauche
-        } else {
-            // Tir normal
-            playerWeapons.push(new Weapon(player.x, player.y, 0));
+    if (playerWeapons.length < 5 && player.ammo > 0) {
+        if (!tripleShotActive) {
+            player.ammo -= 1; // Réduit les munitions à chaque tir
         }
+        shootWeapon();
     }
 }
 
+function shootWeapon() {
+    if (tripleShotActive) {
+        playerWeapons.push(new Weapon(player.x, player.y, 0));
+        playerWeapons.push(new Weapon(player.x, player.y, radians(5)));
+        playerWeapons.push(new Weapon(player.x, player.y, radians(-5)));
+    } else {
+        playerWeapons.push(new Weapon(player.x, player.y, 0));
+    }
+}
 
 function handleEnemies() {
     if (frameCount % 120 === 0) {
@@ -79,7 +85,8 @@ function handleEnemies() {
     enemies.forEach((enemy, index) => {
         enemy.move();
         enemy.display();
-        if (enemy.y > height + enemy.size) {
+        if (enemy.y > height) {
+            player.loseHealth(10);
             enemies.splice(index, 1);
         } else if (enemy.hits(player)) {
             player.loseHealth(10);
@@ -104,45 +111,45 @@ function handleWeapons() {
             }
         }
 
-        // Supprimer la balle si elle touche un ennemi ou sort du canvas
-        if (hitSomething || weapon.y < 0) {
+        if (!hitSomething && weapon.y < 0) {
             playerWeapons.splice(i, 1);
         }
     }
 }
 
-
 function handlePowerUps() {
-    if (frameCount % 600 === 0) {  // Génère un bonus toutes les 10 secondes (à 60 FPS, cela équivaut à 600 frames)
-        let powerUp = new PowerUp(random(width), 10);  // Assurez-vous que les bonus ne commencent pas hors du canvas
+    if (frameCount % 600 === 0) {
+        let type = random(['life', 'ammo']);
+        let powerUp = (type === 'life') ? new PowerUp(lifePlusImg, random(width), 10) : new PowerUp(ammoBonusImg, random(width), 10);
         powerUps.push(powerUp);
-        console.log("Power-up spawned at x:", powerUp.x, "y:", powerUp.y); // Pour déboguer et confirmer la création
     }
 
-    for (let i = powerUps.length - 1; i >= 0; i--) {
-        let powerUp = powerUps[i];
+    powerUps.forEach((powerUp, index) => {
         powerUp.display();
         powerUp.move();
-
-        // Vérifie si le joueur collecte le power-up
         if (dist(player.x, player.y, powerUp.x, powerUp.y) < (player.size / 2 + powerUp.size / 2)) {
-            applyPowerUp();
-            powerUps.splice(i, 1);  // Supprimer le bonus après la collecte
-            console.log("Power-up collected"); // Confirmation de la collecte
+            if (powerUp.img === lifePlusImg) {
+                player.health += 10;
+            } else {
+                player.ammo += 1;  // Ajoute une balle
+            }
+            powerUps.splice(index, 1);
         }
-    }
+    });
 }
-
 
 function applyPowerUp() {
     tripleShotActive = true;
-    console.log("Triple Shot Activated!");
     setTimeout(() => {
         tripleShotActive = false;
-        console.log("Triple Shot Deactivated!");
-    }, tripleShotDuration * 30);  // Dure 300 secondes
+    }, tripleShotDuration * 1000);
 }
 
+function checkAmmo() {
+    if (player.ammo <= 0) {
+        gameOver();
+    }
+}
 
 class Player {
     constructor() {
@@ -150,6 +157,7 @@ class Player {
         this.y = height - 60;
         this.size = 50;
         this.health = 100;
+        this.ammo = initialAmmo;
     }
 
     display() {
@@ -216,25 +224,20 @@ class Weapon {
 }
 
 class PowerUp {
-    constructor(x, y) {
+    constructor(img, x, y) {
+        this.img = img;
         this.x = x;
         this.y = y;
-        this.size = 20; // Vous pouvez ajuster cette taille en fonction de l'image
+        this.size = 20;
     }
 
     display() {
         imageMode(CENTER);
-        image(tripleShotImg, this.x, this.y, this.size, this.size); // Affiche l'image du bonus
+        image(this.img, this.x, this.y, this.size, this.size);
     }
 
     move() {
-        this.y += 2; // Vitesse appropriée pour que le joueur puisse collecter le bonus
-    }
-}
-
-function checkGameOver() {
-    if (player.health <= 0) {
-        gameOver();
+        this.y += 2;
     }
 }
 
@@ -245,11 +248,7 @@ function gameOver() {
         saveScore(score, pseudo);
         showLeaderboard();
     }
-    // Réinitialiser le jeu
-    playerWeapons = [];
-    loop(); // Redémarrer la boucle de jeu si nécessaire
 }
-
 
 function saveScore(score, pseudo) {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
@@ -267,4 +266,10 @@ function showLeaderboard() {
         li.textContent = `${score.pseudo} - ${score.score}`;
         scoreList.appendChild(li);
     });
+}
+
+function checkGameOver() {
+    if (player.health <= 0 || player.ammo <= 0) {
+        gameOver();
+    }
 }
