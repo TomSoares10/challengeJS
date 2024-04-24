@@ -53,16 +53,20 @@ function displayHUD() {
 }
 
 function mouseClicked() {
+    // Vérifie si moins de 5 armes sont actives avant de permettre de tirer
     if (playerWeapons.length < 5) {
         if (tripleShotActive) {
-            playerWeapons.push(new Weapon(player.x, player.y, 0));
-            playerWeapons.push(new Weapon(player.x, player.y, radians(5)));
-            playerWeapons.push(new Weapon(player.x, player.y, radians(-5)));
+            // Tirer en trois directions si le bonus est actif
+            playerWeapons.push(new Weapon(player.x, player.y, 0)); // Tir direct
+            playerWeapons.push(new Weapon(player.x, player.y, radians(5))); // Légèrement à droite
+            playerWeapons.push(new Weapon(player.x, player.y, radians(-5))); // Légèrement à gauche
         } else {
+            // Tir normal
             playerWeapons.push(new Weapon(player.x, player.y, 0));
         }
     }
 }
+
 
 function handleEnemies() {
     if (frameCount % 120 === 0) {
@@ -86,16 +90,24 @@ function handleWeapons() {
         let weapon = playerWeapons[i];
         weapon.display();
         weapon.move();
+        let hitSomething = false;
+
         for (let j = enemies.length - 1; j >= 0; j--) {
             if (weapon.hits(enemies[j])) {
                 score += 100;
                 enemies.splice(j, 1);
-                playerWeapons.splice(i, 1);
+                hitSomething = true;
                 break;
             }
         }
+
+        // Supprimer la balle si elle touche un ennemi ou sort du canvas
+        if (hitSomething || weapon.y < 0) {
+            playerWeapons.splice(i, 1);
+        }
     }
 }
+
 
 function handlePowerUps() {
     if (frameCount % 600 === 0) {  // Génère un bonus toutes les 10 secondes (à 60 FPS, cela équivaut à 600 frames)
@@ -125,7 +137,7 @@ function applyPowerUp() {
     setTimeout(() => {
         tripleShotActive = false;
         console.log("Triple Shot Deactivated!");
-    }, tripleShotDuration * 1000);  // Dure 300 secondes
+    }, tripleShotDuration * 30);  // Dure 300 secondes
 }
 
 
@@ -213,7 +225,7 @@ class PowerUp {
     }
 
     move() {
-        this.y += 1; // Vitesse modérée pour que le bonus descende vers le joueur
+        this.y += 2; // Vitesse modérée pour que le bonus descende vers le joueur
     }
 }
 
@@ -231,7 +243,11 @@ function gameOver() {
         saveScore(score, pseudo);
         showLeaderboard();
     }
+    // Réinitialiser le jeu
+    playerWeapons = [];
+    loop(); // Redémarrer la boucle de jeu si nécessaire
 }
+
 
 function saveScore(score, pseudo) {
     let scores = JSON.parse(localStorage.getItem('scores')) || [];
