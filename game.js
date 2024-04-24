@@ -10,11 +10,14 @@ let tripleShotDuration = 300; // Durée du bonus en nombre de frames
 let powerUps = []; // Liste pour stocker les power-ups
 let playerImg;
 let enemyImg;
+let tripleShotImg; // Variable pour stocker l'image du bonus de tir triple
 
 function preload() {
     playerImg = loadImage('image/vaiseau.png');
     enemyImg = loadImage('image/ennemi.png');
+    tripleShotImg = loadImage('image/bonustripletir.png');
 }
+
 
 function setup() {
     canvas = createCanvas(800, 600);
@@ -216,19 +219,18 @@ class PowerUp {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.size = 20;  // Taille visible pour le bonus
+        this.size = 20; // Vous pouvez ajuster cette taille en fonction de l'image
     }
 
     display() {
-        fill(255, 204, 0); // Utiliser une couleur distincte pour les bonus, comme le jaune
-        ellipse(this.x, this.y, this.size, this.size);
+        imageMode(CENTER);
+        image(tripleShotImg, this.x, this.y, this.size, this.size); // Affiche l'image du bonus
     }
 
     move() {
-        this.y += 2; // Vitesse modérée pour que le bonus descende vers le joueur
+        this.y += 2; // Vitesse appropriée pour que le joueur puisse collecter le bonus
     }
 }
-
 
 function checkGameOver() {
     if (player.health <= 0) {
