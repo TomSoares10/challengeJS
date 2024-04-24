@@ -83,22 +83,21 @@ function adjustDifficulty() {
 }
 
 function handleEnemies() {
-    if (frameCount % 120 === 0) {  // Génère un ennemi toutes les 2 secondes
-        let enemy = new Enemy(random(width), -30);  // Commence hors du canvas en haut
-        enemies.push(enemy);
-        console.log("Enemy spawned at x:", enemy.x, "y:", enemy.y); // Pour déboguer
+    let spawnRate = Math.max(30, 120 - Math.floor(score / 1000) * 10);  // Diminue l'intervalle de spawn avec le score
+    if (frameCount % spawnRate === 0) {
+        enemies.push(new Enemy(random(width), -10));
     }
 
-    enemies.forEach((enemy, index) => {
-        enemy.move();
-        enemy.display();
-        if (enemy.y > height + enemy.size) {  // Vérifie si l'ennemi a quitté le canvas par le bas
-            enemies.splice(index, 1);
-        } else if (enemy.hits(player)) {
+    for (let i = enemies.length - 1; i >= 0; i--) {
+        enemies[i].move();
+        enemies[i].display();
+        if (enemies[i].y > height) {
+            enemies.splice(i, 1);
+        } else if (enemies[i].hits(player)) {
             player.loseHealth(10);
-            enemies.splice(index, 1);
+            enemies.splice(i, 1);
         }
-    });
+    }
 }
 
 
@@ -115,22 +114,18 @@ function handleWeapons() {
             if (weapon.hits(enemies[j])) {
                 playerWeapons.splice(i, 1); // Supprimer la balle
                 enemies.splice(j, 1); // Supprimer l'ennemi
-                score += 100; // Augmenter le score, par exemple
+                score += 100; // Augmenter le score
                 hitSomething = true;
-                break; // Sortir de la boucle après une collision pour éviter des erreurs d'indice
+                break; // Sortir de la boucle après une collision
             }
         }
 
-        // Si la balle n'a rien touché et sort du canvas
+        // Supprimer simplement la balle si elle sort du canvas sans toucher un ennemi
         if (!hitSomething && weapon.y < 0) {
-            player.loseHealth(10);
             playerWeapons.splice(i, 1); // Supprimer la balle
         }
     }
 }
-
-
-
 
 function gameOver() {
     noLoop();
