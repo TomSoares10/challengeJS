@@ -1,4 +1,4 @@
-/*document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('startGame').addEventListener('click', () => {
         // Tentative de redémarrage simplifié pour p5.js
         if (window.canvas instanceof p5) {
@@ -11,4 +11,4 @@
         playerWeapons = [];
         loop(); // Assurez-vous que la boucle de dessin est relancée si elle a été arrêtée
     });
-})*/
+})
